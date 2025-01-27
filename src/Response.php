@@ -7,8 +7,6 @@ use Psr\Http\Message\StreamInterface;
 
 /**
  * Defines a standard, client-bound HTTP response.
- *
- * @phpstan-type StreamGenerator    callable():\Generator<string, void, void, void>
  */
 class Response extends Message implements ResponseInterface
 {

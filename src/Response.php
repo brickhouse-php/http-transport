@@ -32,13 +32,6 @@ class Response extends Message implements ResponseInterface
      */
     public int $status = Status::OK;
 
-    /**
-     * Callback to be invoked after the upgraded response has been written.
-     *
-     * @var null|(\Closure(): void)
-     */
-    private ?\Closure $onUpgrade = null;
-
     public function __construct(
         int $status = Status::OK,
         ?HeaderBag $headers = null,
@@ -58,14 +51,18 @@ class Response extends Message implements ResponseInterface
      * @param null|StreamInterface|string   $body
      * @param int                           $status
      *
-     * @return Response
+     * @return static
      */
-    public static function new(null|StreamInterface|string $body = null, $status = Status::OK): Response
+    public static function new(null|StreamInterface|string $body = null, $status = Status::OK): static
     {
-        $response = new Response($status);
+        // @phpstan-ignore new.static
+        $response = new static();
+
         if ($body !== null) {
             $response->setBody($body);
         }
+
+        $response->status = $status;
 
         return $response;
     }
@@ -76,11 +73,11 @@ class Response extends Message implements ResponseInterface
      * @param string    $url
      * @param int       $status
      *
-     * @return Response
+     * @return static
      */
-    public static function redirect(string $url, int $status = Status::TEMPORARY_REDIRECT): Response
+    public static function redirect(string $url, int $status = Status::TEMPORARY_REDIRECT): static
     {
-        $response = new Response($status);
+        $response = self::new(status: $status);
         $response->headers->set('Location', $url);
 
         return $response;
@@ -91,11 +88,11 @@ class Response extends Message implements ResponseInterface
      *
      * @param mixed     $content
      *
-     * @return Response
+     * @return static
      */
-    public static function json(mixed $content): Response
+    public static function json(mixed $content): static
     {
-        $response = new Response();
+        $response = self::new();
 
         $content = match (true) {
             $content instanceof \JsonSerializable => json_encode($content->jsonSerialize()),
@@ -104,6 +101,7 @@ class Response extends Message implements ResponseInterface
             default => json_encode($content),
         };
 
+        // @phpstan-ignore return.type
         return $response
             ->setContentType(ContentType::JSON)
             ->setBody($content);
@@ -114,12 +112,13 @@ class Response extends Message implements ResponseInterface
      *
      * @param string    $content
      *
-     * @return Response
+     * @return static
      */
-    public static function html(string $content): Response
+    public static function html(string $content): static
     {
-        $response = new Response();
+        $response = self::new();
 
+        // @phpstan-ignore return.type
         return $response
             ->setContentType(ContentType::HTML)
             ->setBody($content);
@@ -131,33 +130,16 @@ class Response extends Message implements ResponseInterface
      * @param string    $content
      * @param string    $contentType
      *
-     * @return Response
+     * @return static
      */
-    public static function text(string $content, string $contentType = ContentType::TXT): Response
+    public static function text(string $content, string $contentType = ContentType::TXT): static
     {
-        $response = new Response();
+        $response = self::new();
 
+        // @phpstan-ignore return.type
         return $response
             ->setContentType($contentType)
             ->setBody($content);
-    }
-
-    /**
-     * Creates a new `Response` instance with streaming response content.
-     *
-     * @param StreamGenerator       $generator      Callable for printing chunks of the response.
-     * @param int                   $status         Defines the status code of the response.
-     * @param array<string,string>  $headers        Defines the headers to send along with the response.
-     *
-     * @return StreamingResponse
-     */
-    public static function stream(callable $generator, int $status = Status::OK, array $headers = []): StreamingResponse
-    {
-        return new StreamingResponse(
-            $generator(),
-            $status,
-            HeaderBag::parseArray($headers)
-        );
     }
 
     /**
@@ -206,18 +188,7 @@ class Response extends Message implements ResponseInterface
      */
     public function upgrade(\Closure $onUpgrade): void
     {
-        $this->onUpgrade = $onUpgrade;
         $this->status = Status::SWITCHING_PROTOCOLS;
-    }
-
-    /**
-     * Gets the callback to be invoked once the response is sent back to the client.
-     *
-     * @return null|(\Closure(): void)
-     */
-    public function getUpgradeHandler(): ?\Closure
-    {
-        return $this->onUpgrade;
     }
 
     /**

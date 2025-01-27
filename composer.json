@@ -24,6 +24,7 @@
     "require": {
         "php": "^8.4",
         "ext-mbstring": "*",
+        "laminas/laminas-diactoros": "^3.5",
         "psr/http-factory": "^1.1",
         "psr/http-message": "^2.0"
     },

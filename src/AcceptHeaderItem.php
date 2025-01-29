@@ -67,4 +67,25 @@ class AcceptHeaderItem
 
         return new AcceptHeaderItem($format, $parts);
     }
+
+    /**
+     * Determines whether the given value matches the accept item.
+     *
+     * @param string $value
+     *
+     * @return boolean
+     */
+    public function matches(string $value): bool
+    {
+        $group = explode('/', $value, limit: 2)[0];
+        if ($group . '/*' === $this->format) {
+            return true;
+        }
+
+        if ('*/*' === $this->format) {
+            return true;
+        }
+
+        return '*' === $this->format;
+    }
 }

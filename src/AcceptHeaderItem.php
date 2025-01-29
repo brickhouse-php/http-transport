@@ -77,8 +77,12 @@ class AcceptHeaderItem
      */
     public function matches(string $value): bool
     {
+        if (strcasecmp($this->format, $value) === 0) {
+            return true;
+        }
+
         $group = explode('/', $value, limit: 2)[0];
-        if ($group . '/*' === $this->format) {
+        if (strcasecmp($group . '/*', $this->format) === 0) {
             return true;
         }
 

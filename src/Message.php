@@ -165,6 +165,33 @@ abstract class Message implements MessageInterface
     }
 
     /**
+     * Creates a new response with the given headers.
+     * If the headers already exist within the response, they are overwritten.
+     *
+     * @param HeaderBag|array<string,string|list<string>>   $headers
+     *
+     * @return static
+     */
+    public function withHeaders(HeaderBag|array $headers): static
+    {
+        $new = clone $this;
+
+        if (is_array($headers)) {
+            $headers = HeaderBag::parseArray($headers);
+        }
+
+        foreach ($headers->all() as $name => $headers) {
+            $new->headers->remove($name);
+
+            foreach ($headers as $header) {
+                $new->headers->add($name, $header);
+            }
+        }
+
+        return $new;
+    }
+
+    /**
      * @inheritDoc
      *
      * Exists to conform with PSR-7.
